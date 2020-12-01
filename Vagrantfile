@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
     box.vm.network "public_network", ip: "10.1.1.100", netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"
   end
 
-  (1..3).each do |i|
+  (1..1).each do |i|
     config.vm.define "swarm-node-#{i}" do |box|
       box.vm.hostname = "swarm-node-#{i}"
       box.vm.network "public_network", ip: "10.1.1.10#{i}", netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"

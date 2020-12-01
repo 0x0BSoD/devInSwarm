@@ -27,19 +27,25 @@
     state: present
   tags: [docker]
 
-- name: Create dockerd directory
+- name: Create docker directory
   become: true
   file:
-    path: /etc/systemd/system/docker.service.d
+    path: /etc/docker
     state: directory
     mode: '0755'
   tags: [docker]  
 
+- name: Copy daemon.json
+  become: yes
+  copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+
 - name: Copy dockerd unit config 
   become: true
-  template:
-    src: options.conf
-    dest: /etc/systemd/system/docker.service.d/options.conf
+  copy:
+    src: override.conf
+    dest: /etc/systemd/system/docker.service.d/override.conf
   tags: [docker]
   
 - name: Enable sysv dockerd service

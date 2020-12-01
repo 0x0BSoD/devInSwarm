@@ -49,3 +49,10 @@
     state: stopped
     enabled: false
   tags: [common]
+
+- name: Append registry fqdn to hosts file
+  become: true
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address'] }} {{ registry_fqdn }}"
+    insertbefore: BOF

@@ -29,14 +29,14 @@
   tags: [services]
 
 # ============ CERTIFICATE ============================
-- name: Create /etc/crt
+- name: Create crt dirs
   become: yes
   file:
     path: "{{ item }}"
     state: directory
   with_items:
     - /etc/crt
-    - "/etc/docker/certs.d/{{hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address']}}:5000"
+    - "/etc/docker/certs.d/{{ registry_fqdn }}:5000"
   tags: [services]
 
 - name: Copy CA CSR config
@@ -93,7 +93,7 @@
   copy:
     remote_src: True
     src: /etc/crt/CA_registry.crt
-    dest: "/etc/docker/certs.d/{{hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address']}}:5000/ca.crt"
+    dest: "/etc/docker/certs.d/{{ registry_fqdn }}:5000/ca.crt"
 # ============ CERTIFICATE ============================
 
 - name: Create registry service
