@@ -1,0 +1,51 @@
+---
+- name: Clean yum
+  become: true
+  shell: yum clean all
+  tags: [common]
+
+- name: Upgrade all packages
+  become: true
+  dnf: 
+    name: '*' 
+    state: latest
+  tags: [common]
+
+- name: Disable selinux
+  selinux: 
+    state: disabled
+  become: true
+  tags: [common]
+
+- name: Install unzip
+  become: true
+  dnf: 
+    name: unzip
+  tags: [common]
+
+- name: Enable the EPEL repository definitions.
+  become: true
+  dnf: 
+    pkg: epel-release
+  tags: [common]
+
+- name: Install python setup tools
+  become: true
+  dnf: 
+    name: python3-setuptools
+  tags: [common]
+
+- name: Install git
+  become: true
+  dnf: 
+    name: git 
+    state: present
+  tags: [common]
+
+- name: Stop firewalld service
+  become: true
+  service:
+    name: firewalld.service
+    state: stopped
+    enabled: false
+  tags: [common]

@@ -1,0 +1,20 @@
+# Hosts
+manager ansible_host=10.1.1.100
+worker1 ansible_host=10.1.1.101
+worker2 ansible_host=10.1.1.102
+worker3 ansible_host=10.1.1.103
+
+[swarm-managers]
+manager
+
+[swarm-workers]
+worker1
+worker2
+worker3
+
+[swarm:children]
+swarm-managers
+swarm-workers
+
+[all:vars]
+ethernet_name=enp0s8

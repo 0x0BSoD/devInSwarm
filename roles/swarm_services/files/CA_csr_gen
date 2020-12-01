@@ -1,0 +1,10 @@
+[req]
+distinguished_name = req_distinguished_name
+prompt = no
+[req_distinguished_name]
+C=RU
+ST=Moscow
+L=Moscow
+O=Global Security
+OU=IT Department
+CN=somesite.com

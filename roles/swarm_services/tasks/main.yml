@@ -1,0 +1,118 @@
+---
+- name: Remove service visualizer
+  become: yes
+  docker_swarm_service:
+    name: visualizer
+    state: absent
+
+- name: Remove service registry
+  become: yes
+  docker_swarm_service:
+    name: registry
+    state: absent
+
+- name: Create visualizer service on *:8080
+  become: yes
+  docker_swarm_service:
+    name: visualizer
+    image: dockersamples/visualizer
+    placement:
+      constraints:
+        - node.role == manager
+    mounts:
+      - source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        type: bind
+    publish:
+      - published_port: 8080
+        target_port: 8080
+  tags: [services]
+
+# ============ CERTIFICATE ============================
+- name: Create /etc/crt
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/crt
+    - "/etc/docker/certs.d/{{hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address']}}:5000"
+  tags: [services]
+
+- name: Copy CA CSR config
+  become: yes
+  copy:
+    src: CA_csr_gen
+    dest: /etc/crt/CA_csr_gen
+
+- name: Copy CSR config
+  become: yes
+  template:
+    src: csr_gen.j2
+    dest: /etc/crt/csr_gen
+
+- name: Create the root key
+  become: yes
+  shell: openssl ecparam -out CA_registry.key -name prime256v1 -genkey
+  args:
+    chdir: /etc/crt
+  tags: [services]
+
+- name: Create a Root Certificate and self-sign it
+  become: yes
+  shell: > 
+    openssl req -new -sha256 -key CA_registry.key -out CA_registry.csr -config CA_csr_gen && 
+    openssl x509 -req -sha256 -days 365 -in CA_registry.csr -signkey CA_registry.key -out CA_registry.crt
+  args:
+    chdir: /etc/crt
+  tags: [services]
+
+- name: Create the certificate's key
+  become: yes
+  shell: openssl ecparam -out registry.key -name prime256v1 -genkey
+  args:
+    chdir: /etc/crt
+  tags: [services]
+
+- name: Create the CSR (Certificate Signing Request)
+  become: yes
+  shell: openssl req -new -sha256 -key registry.key -out registry.csr -config csr_gen
+  args:
+    chdir: /etc/crt
+  tags: [services]
+
+- name: Generate the certificate with the CSR and the key and sign it with the CA's root key
+  become: yes
+  shell: openssl x509 -req -in registry.csr -CA  CA_registry.crt -CAkey CA_registry.key -CAcreateserial -out registry.crt -days 365 -sha256
+  args:
+    chdir: /etc/crt
+  tags: [services]
+
+- name: Copy CA to docker dir
+  become: yes
+  copy:
+    remote_src: True
+    src: /etc/crt/CA_registry.crt
+    dest: "/etc/docker/certs.d/{{hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address']}}:5000/ca.crt"
+# ============ CERTIFICATE ============================
+
+- name: Create registry service
+  become: yes
+  docker_swarm_service:
+    name: registry
+    image: registry
+    env:
+      REGISTRY_HTTP_ADDR: 0.0.0.0:5000
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/registry.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/registry.key
+    placement:
+      constraints:
+        - node.role == manager
+    mounts:
+      - source: /etc/crt
+        target: /certs
+        type: bind
+    publish:
+      - published_port: 5000
+        target_port: 5000
+  tags: [services]

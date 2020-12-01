@@ -1,0 +1,57 @@
+
+---
+- name: Install docker-py
+  become: true
+  pip:
+    name: docker-py
+    extra_args: --ignore-installed
+  tags: [docker]
+
+- name: Add docker repo
+  become: true
+  yum_repository:
+    name: Docker
+    description: Docker YUM repo
+    file: docker
+    baseurl: https://download.docker.com/linux/centos/8/$basearch/stable
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    enabled: yes
+  tags: [docker]
+
+- name: Install Docker
+  become: true
+  yum:
+    name:
+      - docker-ce-{{ docker_version }}
+      - docker-ce-cli-{{ docker_version }}
+    state: present
+  tags: [docker]
+
+- name: Create dockerd directory
+  become: true
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    mode: '0755'
+  tags: [docker]  
+
+- name: Copy dockerd unit config 
+  become: true
+  template:
+    src: options.conf
+    dest: /etc/systemd/system/docker.service.d/options.conf
+  tags: [docker]
+  
+- name: Enable sysv dockerd service
+  become: true
+  service:
+    name: docker.service
+    enabled: yes
+  tags: [docker]
+
+- name: Start service
+  become: true
+  service:
+    name: docker.service
+    state: started
+  tags: [docker]

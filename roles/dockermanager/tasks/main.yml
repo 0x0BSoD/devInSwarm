@@ -1,0 +1,28 @@
+---
+- name: Remove pip package docker-py if any
+  become: yes
+  pip:
+    name: docker-py
+    state: absent
+
+- name: Install pip package docker
+  become: yes
+  pip:
+    name: docker
+
+- name: Disabling swarm
+  become: yes
+  command: docker swarm leave -f
+  ignore_errors: yes
+  tags: [dockermanager]
+
+- name: Initialize swarm cluster
+  become: yes
+  command: "docker swarm init --advertise-addr={{ hostvars[inventory_hostname]['ansible_facts'][ethernet_name]['ipv4']['address'] }}:2377"
+  tags: [dockermanager]
+
+- name: Get the worker join-token
+  become: yes
+  shell: docker swarm join-token --quiet worker
+  register: worker_token
+  tags: [dockermanager]
