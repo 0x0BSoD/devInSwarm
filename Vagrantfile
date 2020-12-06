@@ -5,21 +5,36 @@ Vagrant.configure("2") do |config|
   
   config.ssh.password = 'vagrant'
   config.ssh.keys_only = false
+  # config.ssh.insert_key = false
+  # config.ssh.private_key_path = "#{Dir.home}/.ssh/id_rsa.pub"
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
     vb.memory = "2048"
+    vb.cpus = 2
   end
 
-  config.vm.define "swarm-node-manager" do |box|
-    box.vm.hostname = "swarm-node-manager"
-    box.vm.network "public_network", ip: "10.1.1.100", netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"
+  managers = [
+    { :name => "swarm-manager", :ip => "10.1.1.100" }
+  ]
+
+  workers = [
+    { :name => "swarm-node-1", :ip => "10.1.1.101" },
+    { :name => "swarm-node-2", :ip => "10.1.1.102" },
+    { :name => "swarm-node-3", :ip => "10.1.1.103" },
+  ]
+
+  managers.each do |opts|
+    config.vm.define opts[:name] do |config|
+      config.vm.hostname = opts[:name]
+      config.vm.network "public_network", ip: opts[:ip], netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"
+    end
   end
 
-  (1..1).each do |i|
-    config.vm.define "swarm-node-#{i}" do |box|
-      box.vm.hostname = "swarm-node-#{i}"
-      box.vm.network "public_network", ip: "10.1.1.10#{i}", netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"
+  workers.each do |opts|
+    config.vm.define opts[:name] do |config|
+      config.vm.hostname = opts[:name]
+      config.vm.network "public_network", ip: opts[:ip], netmask:"255.255.0.0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz"
     end
   end
 

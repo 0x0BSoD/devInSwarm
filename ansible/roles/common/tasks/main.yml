@@ -54,5 +54,5 @@
   become: true
   lineinfile:
     path: /etc/hosts
-    line: "{{ hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address'] }} {{ registry_fqdn }}"
+    line: "{{ hostvars['swarm-manager']['ansible_facts'][ethernet_name]['ipv4']['address'] }} {{ registry_fqdn }}"
     insertbefore: BOF

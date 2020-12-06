@@ -1,0 +1,21 @@
+# Hosts
+swarm-manager  ansible_host=10.1.1.100
+swarm-node-1   ansible_host=10.1.1.101
+swarm-node-2   ansible_host=10.1.1.102
+swarm-node-3   ansible_host=10.1.1.103
+
+[swarm-managers]
+swarm-manager
+
+[swarm-workers]
+swarm-node-1
+swarm-node-2
+swarm-node-3
+
+[swarm:children]
+swarm-managers
+swarm-workers
+
+[all:vars]
+ethernet_name=enp0s8
+registry_fqdn=myregistry.com

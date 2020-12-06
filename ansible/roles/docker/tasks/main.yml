@@ -41,6 +41,14 @@
     src: daemon.json
     dest: /etc/docker/daemon.json
 
+- name: Create dockerd override directory
+  become: true
+  file:
+    path: /etc/systemd/system/docker.service.d/
+    state: directory
+    mode: '0755'
+  tags: [docker] 
+
 - name: Copy dockerd unit config 
   become: true
   copy:

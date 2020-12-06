@@ -15,6 +15,11 @@
   roles:
     - dockerworker
 
+- name: Create GlusterFS on hosts
+  hosts: swarm
+  roles:
+    - glusterfs
+
 - name: Create swarm services
   hosts: swarm-managers
   roles:

@@ -7,7 +7,7 @@
   tags: [swarm]
 
 - name: Join nodes to manager
-  command: "docker swarm join --token {{ hostvars['manager']['worker_token']['stdout'] }} {{ hostvars['manager']['ansible_facts'][ethernet_name]['ipv4']['address'] }}:2377"
+  command: "docker swarm join --token {{ hostvars['swarm-manager']['worker_token']['stdout'] }} {{ hostvars['swarm-manager']['ansible_facts'][ethernet_name]['ipv4']['address'] }}:2377"
   become: yes
   failed_when: not "'This node is already part of a swarm' in command_result.stderr"
   tags: [swarm]

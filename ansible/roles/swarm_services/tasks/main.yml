@@ -96,6 +96,15 @@
     dest: "/etc/docker/certs.d/{{ registry_fqdn }}:5000/ca.crt"
 # ============ CERTIFICATE ============================
 
+- name: Create registry dir
+  become: yes
+  file:
+    path: /mnt/gluster/registry
+    state: directory
+  when: ansible_hostname == 'swarm-manager'
+  tags: [services]
+
+
 - name: Create registry service
   become: yes
   docker_swarm_service:
@@ -111,6 +120,9 @@
     mounts:
       - source: /etc/crt
         target: /certs
+        type: bind
+      - source: /mnt/gluster/registry
+        target: /var/lib/registry
         type: bind
     publish:
       - published_port: 5000

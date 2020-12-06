@@ -1,0 +1,79 @@
+---
+- name: Install centos-release-gluster
+  become: true
+  dnf: 
+    name: centos-release-gluster
+    state: present
+  tags: [gluster]
+
+- name: Install glusterfs-server
+  become: true
+  dnf: 
+    name: glusterfs-server
+    state: present
+  tags: [gluster]
+
+- name: Enable sysv glusterd service
+  become: true
+  service:
+    name: glusterd.service
+    enabled: yes
+  tags: [gluster]
+
+- name: Start service
+  become: true
+  service:
+    name: glusterd.service
+    state: started
+  tags: [gluster]
+
+- name: Ensure Gluster brick and mount directories exist
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0775
+  with_items:
+    - "{{ gluster_brick_dir }}"
+    - "{{ gluster_mount_dir }}"
+  tags: [gluster]
+
+- name: Probe nodes
+  become: yes
+  shell: "gluster peer probe {{ hostvars[item]['ansible_facts'][ethernet_name]['ipv4']['address'] }}"  
+  with_items: 
+    - "{{ groups['swarm-workers'] }}"
+  when: ansible_hostname == 'swarm-manager'
+  tags: [gluster]
+
+- name: Setup Replicated GlusterFS Storage Volume
+  become: yes
+  shell:
+    gluster volume create {{ gluster_brick_name }} replica {{ groups['swarm'] | length }} transport tcp 
+    {% for host in groups['swarm'] %}
+      "{{ hostvars[host]['ansible_facts'][ethernet_name]['ipv4']['address'] }}:{{ gluster_brick_dir }} "
+    {% endfor %}
+    force
+  when: ansible_hostname == 'swarm-manager'
+  tags: [gluster]
+
+- name: Start the GlusterFS volume
+  become: yes
+  shell: "gluster volume start {{ gluster_brick_name }}"
+  when: ansible_hostname == 'swarm-manager'
+  tags: [gluster]
+
+- name: Add fstab entry
+  become: yes
+  shell: "echo 'localhost:/{{ gluster_brick_name }} {{ gluster_mount_dir }} glusterfs defaults,_netdev,backupvolfile-server=localhost 0 0' >> /etc/fstab"
+  tags: [gluster]
+
+- name: Mount
+  become: yes
+  shell: "mount.glusterfs localhost:/{{ gluster_brick_name }} {{ gluster_mount_dir }}"
+  tags: [gluster]
+
+- name: Change owner
+  become: yes
+  shell: "chown -R root:docker {{ gluster_mount_dir }}"
+  tags: [gluster]
